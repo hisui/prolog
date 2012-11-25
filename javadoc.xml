@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="javadoc">
+    <target name="javadoc">
+        <javadoc encoding="UTF-8" charset="UTF-8" access="protected" author="true" classpath="." destdir="doc" doctitle="sf-Prolog 0.1.1" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="jp.segfault.prolog,jp.segfault.prolog.tool,jp.segfault.prolog.parser,jp.segfault.prolog.util,jp.segfault.prolog.term,jp.segfault.prolog.code,jp.segfault.prolog.procedure,jp.segfault.prolog.event" source="1.7" sourcepath="src" splitindex="true" use="true" version="true"/>
+    </target>
+</project>
