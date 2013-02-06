@@ -4,6 +4,7 @@ import jp.segfault.prolog.term.CompRef;
 import jp.segfault.prolog.term.Complex;
 import jp.segfault.prolog.term.Term;
 import jp.segfault.prolog.term.Thunk;
+import jp.segfault.prolog.term.Template;
 import jp.segfault.prolog.term.Var;
 import jp.segfault.prolog.term.VarRef;
 import jp.segfault.prolog.term.Variable;
@@ -16,12 +17,18 @@ public class Unifier {
 
 	private VarRef[] vars = new VarRef[]{};
 	private int      size = 0;
+	private final boolean TRACE;
+	
+	public Unifier(Query query) {
+		this.TRACE = query != null
+				&& "yes".equals(query.state.getFlag("trace_unification"));
+	}
 
 	/**
 	 * 単一化を実行し、成功した場合は環境に反映します。
 	 */
 	public static boolean unify(Query query, Term x, Term y) {
-		Unifier unifier = new Unifier();
+		Unifier unifier = new Unifier(query);
 		if(unifier.exec(x, y)) {
 			unifier.commit(query);
 			return true;
@@ -44,7 +51,7 @@ public class Unifier {
 	public boolean exec(Term x, Binding bx, Term y, Binding by) {
 		boolean succeeded = false;
 		try {
-			succeeded = unify(x, bx, y, by);
+			succeeded = unify(x, bx, y, by, 0);
 		} finally {
 			if(!succeeded) {
 				rollback();
@@ -57,8 +64,6 @@ public class Unifier {
 	 * 実行結果を環境に反映します。
 	 */
 	public void commit(Query query) {
-		
-		final boolean TRACE = query != null && "yes".equals(query.state.getFlag("trace_unification"));
 		if(TRACE) {
 			System.err.println("Unifier.commit: 開始！");
 		}
@@ -92,13 +97,18 @@ public class Unifier {
 		size = 0;
 	}
 
-	private boolean unify(Term x, Binding bx, Term y, Binding by) {
+	private boolean unify(Term x, Binding bx, Term y, Binding by, int level) {
 		if(x == Variable._ || y == Variable._) {
 			return true;
 		}
 		Term $x = ref(x, bx);
 		Term $y = ref(y, by);
-		if($x == $y || $x.equals($y)) {
+		if(TRACE) {
+			trace("[unify] $x=" + $x, level);
+			trace("        $y=" + $y, level);
+		}
+		if(($x == $y || $x.equals($y)) && !($x instanceof Template)) {
+			trace("==> equal:" + ($x == $y), level);
 			return true;
 		}
 		boolean X = $x instanceof VarRef;
@@ -108,6 +118,7 @@ public class Unifier {
 			if(X)
 			     substitute((VarRef) $x, $y.bind(by));
 			else substitute((VarRef) $y, $x.bind(bx));
+			trace("==> substitute", level);
 			return true;
 		}
 		// どちらも変数
@@ -118,6 +129,7 @@ public class Unifier {
 			if(delta != 0 ? delta < 0: vx.var.id < vy.var.id)
 			     substitute(vy, vx);
 			else substitute(vx, vy);
+			trace("==> union", level);
 			return true;
 		}
 		while($x instanceof Thunk) $x = $x.strip();
@@ -130,14 +142,26 @@ public class Unifier {
 				if(fx instanceof CompRef) { CompRef ref = (CompRef) fx; bx = ref.binding; fx = ref.comp; }
 				if(fy instanceof CompRef) { CompRef ref = (CompRef) fy; by = ref.binding; fy = ref.comp; }
 				if(fx.name().equals(fy.name())) {
+					trace("==> + recursive: fx=" + fx + ", fy=" + fy, level);
+					trace("               : $x=" + $x + ", $y=" + $y, level);
 					for(int i = 0; i < fx.arity(); ++i) {
-						if(!unify(fx.get(i), bx, fy.get(i), by)) return false;
+						trace("    + x("+i+") = " + fx.get(i), level);
+						trace("    + y("+i+") = " + fy.get(i), level);
+						if(!unify(fx.get(i), bx, fy.get(i), by, level+1)) return false;
 					}
 					return true;
 				}
 			}
 		}
 		return false;
+	}
+	
+	private void trace(String msg, int level) {
+		if(TRACE) {
+			for(int i = 0; i < level; ++i)
+			System.err.print("  ");
+			System.err.println(msg);
+		}
 	}
 
 	private void substitute(VarRef var, Term val) {

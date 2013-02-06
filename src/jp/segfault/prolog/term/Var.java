@@ -8,7 +8,7 @@ import jp.segfault.prolog.Binding;
  * 実体化されていない変数({@link Variable})です。
  * @author shun
  */
-public class Var extends Variable {
+public class Var extends Variable implements Template {
 	
 	public final int    id;
 	public final String name;

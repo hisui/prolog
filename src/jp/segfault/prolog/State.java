@@ -2,6 +2,7 @@ package jp.segfault.prolog;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -284,7 +285,8 @@ public class State {
 	 * Prologテキストをファイルから読み取って解析し、評価します。
 	 */
 	public void parse(File file) throws IOException, ParseException {
-		BufferedReader reader = new BufferedReader(new FileReader(file));
+		BufferedReader reader = new BufferedReader(
+				new InputStreamReader(new FileInputStream(file), "UTF-8"));
 		try {
 			parse(reader);
 		} finally {

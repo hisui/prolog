@@ -69,7 +69,7 @@ public class Coding extends Procedure {
 	public Code call(Query query, Binding caller, Term[] args) {
 		if(head != null) {
 			// System.err.println("call: "+ head +", depth="+ (caller.depth + 1));
-			Unifier unifier = new Unifier();
+			Unifier unifier = new Unifier(query);
 			for(int i = 0; i < head.arity(); ++i) {
 				if(!unifier.exec(args[i], caller, head.get(i), query.callee)) {
 					return Result.Fail;

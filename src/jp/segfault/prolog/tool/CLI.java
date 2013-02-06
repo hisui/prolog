@@ -1,9 +1,7 @@
 package jp.segfault.prolog.tool;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PipedReader;
 import java.io.PipedWriter;
 import java.util.List;
@@ -31,7 +29,6 @@ import jp.segfault.prolog.term.Term;
 public class CLI {
 
 	private final State state;
-	private final BufferedReader reader;
 
 	public static void main(String[] args) throws Exception {
 		State state = new State(System.in, System.out);
@@ -48,7 +45,6 @@ public class CLI {
 
 	public CLI(State state) {
 		this.state = state;
-		reader = new BufferedReader(new InputStreamReader(state.in));
 	}
 
 	public void exec() throws Exception {
@@ -60,7 +56,7 @@ public class CLI {
 			state.out.printf("%02d ?- ", ++i);
 			state.out.flush();
 			for(int j = 0;; ) {
-				String line = this.reader.readLine();
+				String line = System.console().readLine();
 				if(line == null) {
 					break;
 				}
@@ -74,7 +70,7 @@ public class CLI {
 					}
 					do { ask(term); } while((term = parser.next()) != null);
 				} catch(ParseException e) {
-					state.out.println("解析エラー: "+ e.getMessage());
+					state.out.println("Parse error: "+ e.getMessage());
 				}
 				break;
 			}
@@ -105,7 +101,7 @@ public class CLI {
 				}
 				state.out.print("ok? [y/N]");
 				state.out.flush();
-			} while(reader.readLine().indexOf("y") == -1);
+			} while(System.console().readLine().indexOf("y") == -1);
 			state.out.println("true.");
 		} catch(QueryException e) {
 			e.printStackTrace();

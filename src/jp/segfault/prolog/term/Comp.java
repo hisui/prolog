@@ -56,8 +56,9 @@ public class Comp extends Complex {
 	private static class Instance extends Comp {
 		Instance(String name, Term[] args) { super(name, args); }
 	}
-	
-	private static class Template extends Comp {
+
+	private static class Template extends Comp
+			implements jp.segfault.prolog.term.Template {
 
 		Template(String name, Term[] args) {
 			super(name, args);
