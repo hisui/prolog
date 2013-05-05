@@ -88,7 +88,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("assertz/1")
 	public static final Foreign ASSERTZ = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			Coding coding = Coding.create(query.state, args[0].unbind());
@@ -102,7 +101,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("asserta/1")
 	public static final Foreign ASSERTA = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			Coding coding = Coding.create(query.state, args[0].unbind());
@@ -116,7 +114,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("abolish/1")
 	public static final Foreign ABOLISH = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			query.state.delete(Predicate.of(args[0]));
@@ -126,7 +123,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("retract/1")
 	public static final Foreign RETRACT$1 = new Foreign() {
-
 		@Override
 		public Code call(Query query, Term... args) {
 			Functor head = args[0].functor();
@@ -151,7 +147,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("current_predicate/1")
 	public static final Foreign CURRENT_PREDICATE = new Foreign() {
-		
 		@Override
 		protected Code call0(final Query query, final Term... args) {
 			final Iterator<Predicate> i = query.state.predicates().iterator();
@@ -173,7 +168,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("listing/1")
 	public static final Foreign LISTING = new Foreign() {
-		
 		@Override
 		protected Code call0(Query query, Term... args) {
 			for(Procedure procedure : query.state.select(Predicate.of(args[0]))) {
@@ -192,7 +186,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("clause/2")
 	public static final Foreign CLAUSE = new Foreign() {
-		
 		@Override
 		protected Code call0(final Query query, final Term... args) {
 			query.setChoicePoint(new UnmodifiableIterator<Code> () {
@@ -240,7 +233,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("=/2")
 	public static final Foreign UNIFY = new Foreign() {
-
 		@Override
 		public Code call(Query query,
 				int ancestry, Binding caller, Code next, Term[] args)
@@ -261,7 +253,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("\\=/2")
 	public static final Foreign NOT_UNIFY = new Foreign() {
-
 		@Override
 		public Code call(Query query, Binding caller, Term[] args) {
 			return Result.valueOf(!new Unifier(query).exec(args[0], caller, args[1], caller));
@@ -270,7 +261,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("arg/3")
 	public static final Foreign ARG = new Foreign() {
-
 		@Override
 		protected Code call0(final Query query, final Term... args) {
 			final Functor functor = args[1].functor();
@@ -305,11 +295,10 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("=../2")
 	public static final Foreign EQUAL_AND_TWO_PERIODS = new Foreign() {
-		
 		@Override
 		public Code call0(Query query, Term... args) {
-			Term x = null;
-			Term y = null;
+			Term x;
+			Term y;
 			if(args[0] instanceof Functor) {
 				Functor functor = (Functor) args[0];
 				ArrayDeque<Term> terms = new ArrayDeque<Term>(1 + functor.arity());
@@ -326,18 +315,12 @@ public abstract class Foreign extends Procedure {
 				x = args[0];
 				y = Functor.create(terms.get(0).atom().value(), terms.subList(1, terms.size()));
 			}
-			Unifier unifier = new Unifier(query);
-			if(unifier.exec(x, y)) {
-				unifier.commit(query);
-				return True;
-			}
-			return Fail;
+			return UNIFY.call(query, x, y);
 		}
 	};
 	
 	@Declaration("functor/3")
 	public static final Foreign FUNCTOR = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			Unifier unifier = new Unifier(query);
@@ -365,7 +348,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("copy_term/2")
 	public static final Foreign COPY_TERM = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return UNIFY.call(query, args[1], args[0].rebind(query.callee));
@@ -374,7 +356,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("term_variables/2")
 	public static final Foreign TERM_VARIABLES = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return UNIFY.call(query, args[1], Functor.list(args[0].extract()));
@@ -395,15 +376,11 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("call/1")
 	public static final Foreign CALL = new Foreign() {
-
 		@Override
 		public Code call(Query query,
 				int ancestry, Binding caller, Code next, Term[] args)
 		{
-			Term term = args[0].bind(caller).strip();
-			if(term instanceof Variable) {
-				throw QueryException.instantiation_error();
-			}
+			Term term = args[0].bind(caller).strip().functor();
 			Binding base = null;
 			if(term instanceof CompRef) {
 				// term が属するコールフレームを引き継いだ環境をつくる
@@ -458,7 +435,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("throw/1")
 	public static final Foreign THROW = new Foreign() {
-		
 		@Override
 		protected Code call0(Query query, Term ...args) {
 			throw new QueryException(args[0]);
@@ -467,10 +443,8 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("findall/3")
 	public static final Foreign FINDALL = new Foreign() {
-		
 		@Override
 		public Code call0(final Query query, final Term... args) {
-			
 			// _ は特別扱い(高速化)
 			if(args[2] == Variable._) {
 				query.setChoicePoint(new SingleValueIterator<Code>() {
@@ -481,13 +455,11 @@ public abstract class Foreign extends Procedure {
 			
 			final ArrayDeque<Term> results = new ArrayDeque<Term>();
 			query.setChoicePoint(new SingleValueIterator<Code>() {
-				
 				@Override
 				protected Code value() {
 					return UNIFY.call(query, args[2], Functor.list(results).bind(query.callee));
 				}
 			});
-			
 			return new Call(new Call(Fail, new Term[]{}, new Procedure()
 			{
 				@Override
@@ -499,14 +471,12 @@ public abstract class Foreign extends Procedure {
 				}
 			}), new Term[]{args[1]}, CALL);
 		}
-		
 	};
 
 	/* 算術式 */
 	
 	@Declaration("is/2")
 	public static final Foreign IS = new Foreign() {
-		
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return UNIFY.call(query, args[0], Term.valueOf(eval(args[1])));
@@ -515,7 +485,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("</2")
 	public static final Foreign LESS_THAN = new Foreign() {
-		
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return Result.valueOf(eval(args[0]) < eval(args[1]));
@@ -524,7 +493,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("=:=/2")
 	public static final Foreign EQUAL = new Foreign() {
-		
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return Result.valueOf(eval(args[0]) == eval(args[1]));
@@ -535,7 +503,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("atom_length/2")
 	public static final Foreign ATOM_LENGTH = new Foreign() {
-		
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return UNIFY.call(query, Term.valueOf(args[0].atom().value().length()), args[1]);
@@ -545,7 +512,6 @@ public abstract class Foreign extends Procedure {
 	// TODO 効率化
 	@Declaration("atom_concat/3")
 	public static final Foreign ATOM_CONCAT = new Foreign() {
-		
 		@Override
 		protected Code call0(final Query query, final Term... args) {
 			if(args[2] instanceof Variable) {
@@ -582,7 +548,6 @@ public abstract class Foreign extends Procedure {
 	// TODO 効率化
 	@Declaration("sub_atom/5")
 	public static final Foreign SUB_ATOM = new Foreign() {
-		
 		@Override
 		protected Code call0(final Query query, final Term... args) {
 			query.setChoicePoint(new UnmodifiableIterator<Code>() {
@@ -620,7 +585,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("atom_chars/2")
 	public static final Foreign ATOM_CHARS = new Foreign() {
-		
 		@Override
 		protected Code call0(final Query query, Term... args) {
 			if(args[0] instanceof Variable) {
@@ -631,21 +595,11 @@ public abstract class Foreign extends Procedure {
 				return UNIFY.call(query, args[0], Term.valueOf(value));
 			}
 			final String value = args[0].atom().value();
-			return UNIFY.call(query, args[1], Functor.list(new UnmodifiableIterator<Term>() {
-
-				int i = value.length() - 1;
-						
-				@Override
-				public boolean hasNext() {
-					return i >= 0;
-				}
-
-				@Override
-				public Term next() {
-					int j = i--;
-					return Term.valueOf(value.substring(j, j + 1));
-				}
-			}));
+			final Term[] chars = new Term[value.length()];
+			for(int i = 0; i < value.length(); ++i) {
+				chars[value.length() - i - 1] = Term.valueOf(""+ value.charAt(i));
+			}
+			return UNIFY.call(query, args[1], Functor.list(chars));
 		}
 	};
 	
@@ -653,7 +607,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("var/1")
 	public static final Foreign VAR = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return Result.valueOf(args[0] instanceof Variable);
@@ -662,7 +615,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("atom/1")
 	public static final Foreign ATOM = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return Result.valueOf(args[0] instanceof Atom);
@@ -671,7 +623,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("integer/1")
 	public static final Foreign INTEGER = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return Result.valueOf(args[0] instanceof Numeric
@@ -681,16 +632,15 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("float/1")
 	public static final Foreign FLOAT = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return Result.valueOf(args[0] instanceof Numeric
 					&& ((Numeric) args[0]).value() instanceof Double);
 		}
 	};
+	
 	@Declaration("number/1")
 	public static final Foreign NUMBER = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return Result.valueOf(args[0] instanceof Numeric);
@@ -699,7 +649,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("atomic/1")
 	public static final Foreign ATOMIC = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return Result.valueOf(args[0] instanceof Atomic);
@@ -708,7 +657,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("compound/1")
 	public static final Foreign COMPOUND = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return Result.valueOf(args[0] instanceof Complex);
@@ -719,7 +667,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("current_input/1")
 	public static final Foreign CURRENT_INPUT = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return UNIFY.call(query, args[0], Term.valueOf(query.state.getInput()));
@@ -728,7 +675,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("current_output/1")
 	public static final Foreign CURRENT_OUTPUT = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return UNIFY.call(query, args[0], Term.valueOf(query.state.getOutput()));
@@ -737,7 +683,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("open/3")
 	public static final Foreign OPEN = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			try {
@@ -755,7 +700,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("close/1")
 	public static final Foreign CLOSE = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			Object stream = args[0].atom().value();
@@ -777,7 +721,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("get_char/2")
 	public static final Foreign GET_CHAR = new Foreign() {
-		
 		@Override
 		public Code call0(Query query, Term... args) {
 			InputStream in = args[0].cast(InputStream.class, Atom.STREAM);
@@ -791,7 +734,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("read_term/3")
 	public static final Foreign READ_TERM = new Foreign() {
-		
 		@Override
 		public Code call0(Query query, Term... args) {
 			try {
@@ -811,7 +753,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("put_char/2")
 	public static final Foreign PUT_CHAR = new Foreign() {
-		
 		@Override
 		public Code call0(Query query, Term... args) {
 			PrintStream out = args[0].cast(PrintStream.class, Atom.STREAM);
@@ -832,7 +773,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("write_term/3")
 	public static final Foreign WRITE_TERM = new Foreign() {
-		
 		@Override
 		public Code call0(Query query, Term... args) {
 			PrintStream out = args[0].cast(PrintStream.class, Atom.STREAM);
@@ -844,7 +784,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("display/2")
 	public static final Foreign DISPLAY = new Foreign() {
-		
 		@Override
 		public Code call0(Query query, Term... args) {
 			args[0].cast(PrintStream.class, Atom.STREAM).println(args[1].unbind().toString());
@@ -856,7 +795,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("halt/1")
 	public static final Foreign HALT = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			System.exit(args[0].numeric().value().intValue());
@@ -866,7 +804,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("set_prolog_flag/2")
 	public static final Foreign SET_PROLOG_FLAG = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			query.state.setFlag(args[0].atom().value(),
@@ -877,11 +814,10 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("current_prolog_flag/2")
 	public static final Foreign CURRENT_PROLOG_FLAG = new Foreign() {
-
 		@Override
 		protected Code call0(final Query query, final Term... args) {
-			query.setChoicePoint(new UnmodifiableIterator<Code> () {
-				
+			query.setChoicePoint(new UnmodifiableIterator<Code> ()
+			{	
 				Iterator<String> i = query.state.flagKeys().iterator();
 
 				@Override
@@ -908,7 +844,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("op/3")
 	public static final Foreign OP = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			Operator.Kind kind = null;
@@ -928,7 +863,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("current_op/3")
 	public static final Foreign CURRENT_OP = new Foreign() {
-
 		@Override
 		protected Code call0(final Query query, final Term... args) {
 			final Iterator<String> i = query.state.getOperatorTable().keys().iterator();
@@ -970,7 +904,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("consult/1")
 	public static final Foreign CONSULT = new Foreign() {
-
 		@Override
 		protected Code call0(Query query, Term... args) {
 			try {
@@ -986,7 +919,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("term_compare/3")
 	public static final Foreign TERM_COMPARE = new Foreign() {
-		
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return UNIFY.call(query, Term.valueOf(Term.compare(args[0], args[1])), args[2]);
@@ -995,7 +927,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("time/1")
 	public static final Foreign TIME = new Foreign() {
-		
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return UNIFY.call(query, args[0], Term.valueOf((int) System.currentTimeMillis()));
@@ -1015,7 +946,6 @@ public abstract class Foreign extends Procedure {
 
 	@Declaration("jvm_load_foreign/2")
 	public static final Foreign JVM_LOAD_FOREIGN = new Foreign() {
-		
 		@Override
 		protected Code call0(Query query, Term... args) {
 			
@@ -1043,10 +973,8 @@ public abstract class Foreign extends Procedure {
 	// randoms(L) :- thunk(L, [H|T], (random(H), randoms(T))).
 	@Declaration("thunk/3")
 	public static final Foreign THUNK = new Foreign() {
-		
 		@Override
 		protected Code call0(Query query, Term... args) {
-
 			final Variable bridge = Variable.create();
 			final    State  state = query.state;
 			final   Coding coding = Coding.create(state,
@@ -1057,7 +985,6 @@ public abstract class Foreign extends Procedure {
 							args[2].unbind())));
 
 			return UNIFY.call(query, args[0], new Thunk() {
-				
 				@Override
 				public Term strip() {
 					List<Term> result = new Query(state, coding).ask();
@@ -1074,7 +1001,6 @@ public abstract class Foreign extends Procedure {
 	
 	@Declaration("sleep/1")
 	public static final Foreign SLEEP = new Foreign() {
-		
 		@Override
 		protected Code call0(Query query, Term... args) {
 			try {
@@ -1088,7 +1014,6 @@ public abstract class Foreign extends Procedure {
 	// TODO
 	@Declaration("isolate/2")
 	public static final Foreign ISOLATE = new Foreign() {
-		
 		@Override
 		protected Code call0(Query query, Term... args) {
 			return True;

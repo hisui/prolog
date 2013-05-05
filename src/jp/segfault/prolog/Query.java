@@ -172,20 +172,21 @@ public class Query {
 				@Override
 				public Code visit(Cut code) {
 					ChoicePoint top = choicePoint;
-					if(code.count == 0) {
-						while(choicePoint.ancestry >= callee.ancestry) {
+					if (code.count == 0) {
+						while (choicePoint.ancestry >= callee.ancestry) {
 							choicePoint = choicePoint.parent;
 						}
 					}
 					else {
-						while(choicePoint.ancestry > callee.ancestry) {
+						while (choicePoint.ancestry > callee.ancestry) {
 							choicePoint = choicePoint.parent;
 						}
-						for(int i = 0; i < code.count && choicePoint.parent != null; ++i) {
+						for (int i = 0; i < code.count
+								&& choicePoint.ancestry >= callee.ancestry; ++i) {
 							choicePoint = choicePoint.parent;
 						}
 					}
-					if(choicePoint.parent != null) {
+					if (choicePoint.parent != null) {
 						choicePoint.add(top);
 					}
 					return code.next;
@@ -200,7 +201,7 @@ public class Query {
 				public Code visit(Noop code) {
 					return code.next;
 				}
-
+				
 			});
 			if(next == True) {
 				// エントリーポイントまで戻ってきた

@@ -1,7 +1,7 @@
 package jp.segfault.prolog.term;
 
 /**
- * Prologの数値のです。
+ * Prologの数値です。
  * @author shun
  */
 public class Numeric extends Term implements Atomic<Number> {

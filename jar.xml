@@ -9,6 +9,8 @@
                 <attribute name="Class-Path" value="."/>
             </manifest>
             <fileset dir="./bin"/>
+        	<service type="javax.script.ScriptEngineFactory"
+        		provider="jp.segfault.prolog.script.PlScriptEngineFactory"/>
         </jar>
     </target>
 </project>

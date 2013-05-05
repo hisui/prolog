@@ -64,7 +64,7 @@ halt :- halt(0).
 
 listing :-
 	current_predicate(Pred),
-	  write(Pred),
+	  write(Pred), nl,
 	listing(Pred), nl, fail; true.
 
 [File| Files] :- consult(File), Files.
@@ -88,6 +88,11 @@ read_term(Term, Options) :-
 
 put_char(Char) :- current_output(Out), put_char(Out, Char).
 get_char(Char) :- current_input(In)  , get_char(In, Char).
+
+print(Str) :-
+	atom(Str),
+	atom_chars(Str, L),
+	forall(member(E, L), put_char(E)).
 
 nl :- put_char('\n').
 
