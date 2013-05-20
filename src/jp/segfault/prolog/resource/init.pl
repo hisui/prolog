@@ -10,6 +10,7 @@
 :- op(1200,  fx,   ?-).
 :- op(1100, xfy,    ;).
 :- op(1050, xfx,   ->).
+:- op(1050, xfx,  *->).
 :- op(1000, xfy,    ,).
 :- op( 900,  fy,   \+).
 :- op( 700, xfx,   is).
@@ -102,6 +103,9 @@ nl :- put_char('\n').
 %%
 
 \+ A :- A, !, fail; true.
+
+% goal_expansion(A *-> B; C, '*->'(A, B, C)).
+% goal_expansion(A *-> B   , (A, B)).
 
 true(X) :- X; true.
 once(X) :- X, !.

@@ -418,9 +418,7 @@ public abstract class Foreign extends Procedure {
 		}
 		
 		@Override
-		public int locals() {
-			return 2;
-		}
+		public int locals() { return 2; }
 
 		@Override
 		public Code catches(Query query, QueryException e) {
@@ -472,6 +470,46 @@ public abstract class Foreign extends Procedure {
 			}), new Term[]{args[1]}, CALL);
 		}
 	};
+
+	@Declaration("*->/3")
+	public static final Foreign STAR_ARROW = new Foreign() {
+		@Override
+		protected Code call0(Query query, Term... args) {
+
+			final Term a = args[0];
+			final Term b = args[1];
+			final Term c = args[2];
+			final boolean[] flag = new boolean[] { true };
+
+			query.setChoicePoint(new UnmodifiableIterator<Code>() {
+
+				@Override
+				public boolean hasNext() { return flag[0]; }
+
+				@Override
+				public Code next() {
+					if ((flag[0] = !flag[0])) {
+						throw new NoSuchElementException();
+					}
+					return new Call(True, new Term[]{c}, CALL);
+				}
+			});
+
+			return new Call(
+				new Call(
+				new Call(True, new Term[]{b}, CALL), new Term[0], new Procedure()
+			{
+				@Override
+				public Code call(Query query
+					, int ancestry, Binding caller, Code next, Term[] _)
+				{
+					flag[0] = false;
+					return next;
+				}
+			}), new Term[]{a}, CALL);
+		}
+	};
+
 
 	/* 算術式 */
 	
@@ -1031,4 +1069,5 @@ public abstract class Foreign extends Procedure {
 	public static void abort() {
 		System.exit(-1);
 	}
+
 }
