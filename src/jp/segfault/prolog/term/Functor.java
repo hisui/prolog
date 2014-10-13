@@ -37,8 +37,25 @@ public abstract class Functor extends Term {
 	}
 
 	public static <T extends Term> Term list(Iterator<T> i, Term tail) {
-		while(i.hasNext()) {
-			tail = create(".", Arrays.asList(i.next(), tail));
+		return foldBy(".", i, tail);
+	}
+
+	public static Term conj(Term ...terms) {
+		return foldBy(",", Arrays.asList(terms));
+	}
+
+	public static <T extends Term> Term disj(Term ...terms) {
+		return foldBy(";", Arrays.asList(terms));
+	}
+
+	public static <T extends Term> Term foldBy(String name, List<T> a) {
+		assert !a.isEmpty();
+		return foldBy(name, a.subList(0, a.size() - 1).iterator(), a.get(a.size() - 1));
+	}
+
+	public static <T extends Term> Term foldBy(String name, Iterator<T> i, Term tail) {
+		while (i.hasNext()) {
+			tail = create(name, Arrays.asList(i.next(), tail));
 		}
 		return tail;
 	}
@@ -101,15 +118,15 @@ public abstract class Functor extends Term {
 	public List<Term> unlist(Predicate cons, boolean withNil) {
 		ArrayList<Term> list = new ArrayList<Term>();
 		Term tail = this;
-		while((tail = tail.strip()) instanceof Functor) {
+		while ((tail = tail.strip()) instanceof Functor) {
 			Functor functor = (Functor) tail;
-			if(!cons.equals(functor.predicate())) {
+			if (!cons.equals(functor.predicate())) {
 				break;
 			}
 			list.add(functor.get(0).strip());
 			tail =  (functor.get(1).strip());
 		}
-		if(withNil) {
+		if (withNil) {
 			list.add(tail);
 		}
 		return list;
