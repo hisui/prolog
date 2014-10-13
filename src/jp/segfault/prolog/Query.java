@@ -178,9 +178,6 @@ public class Query {
 						}
 					}
 					else {
-						while (choicePoint.ancestry > callee.ancestry) {
-							choicePoint = choicePoint.parent;
-						}
 						for (int i = 0; i < code.count
 								&& choicePoint.ancestry >= callee.ancestry; ++i) {
 							choicePoint = choicePoint.parent;
