@@ -81,7 +81,7 @@ public abstract class Code implements Cloneable {
 			for(int i = 0; i < codes.length; ++i) {
 				codes[i] = visit(code.codes[i]);
 			}
-			return new Choice(codes);
+			return new Choice(codes, code.local);
 		}
 
 		@Override
@@ -91,7 +91,7 @@ public abstract class Code implements Cloneable {
 
 		@Override
 		public Code visit(Cut code) {
-			return new Cut(visit(code.next), code.count);
+			return new Cut(visit(code.next), code.local);
 		}
 
 		@Override

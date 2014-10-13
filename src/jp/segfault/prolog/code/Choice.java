@@ -7,9 +7,11 @@ package jp.segfault.prolog.code;
 public class Choice extends Code {
 
 	public final Code[] codes;
+	public final boolean local;
 	
-	public Choice(Code[] codes) {
+	public Choice(Code[] codes, boolean local) {
 		this.codes = codes;
+		this.local = local;
 	}
 
 	@Override

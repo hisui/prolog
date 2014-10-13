@@ -16,7 +16,6 @@ import jp.segfault.prolog.procedure.Procedure;
 import jp.segfault.prolog.term.Atom;
 import jp.segfault.prolog.term.Term;
 import jp.segfault.prolog.util.UnmodifiableIterator;
-
 import static jp.segfault.prolog.code.Result.*;
 
 /**
@@ -37,7 +36,7 @@ public class Query {
 	
 	// ChoicePoinのリンクリスト。ここに入っているのが一番上になる。
 	private              ChoicePoint choicePoint = GUARD;
-	private static final ChoicePoint GUARD       = new ChoicePoint(null, null, -1, null);
+	private static final ChoicePoint GUARD       = new ChoicePoint(null, null, -1, false, null);
 
 	private int ancestry;
 	private Code next;
@@ -54,7 +53,11 @@ public class Query {
 	 * ChoicePointを設定します。
 	 */
 	public void setChoicePoint(Iterator<Code> iterator) {
-		setChoicePoint(iterator, ancestry);
+		setChoicePoint(iterator, ancestry, false);
+	}
+
+	public void setChoicePoint(Iterator<Code> iterator, boolean local) {
+		setChoicePoint(iterator, ancestry, local);
 	}
 	
 	/**
@@ -68,33 +71,38 @@ public class Query {
 	 * バックトラッキングすることが出来るかどうかを返します。
 	 */
 	public boolean canBacktrack() {
-		return choicePoint.parent != null;
+		for (ChoicePoint e = choicePoint; e.parent != null; e = e.parent) {
+			if (e.iterator.hasNext()) {
+				return true;
+			}
+		}
+		return false;
 	}
-	
+
 	/**
 	 * クエリを実行し、その結果を返します。
 	 */
 	public List<Term> ask() {
 		final boolean TRACE = "yes".equals(state.getFlag("trace_call_frame"));
 	outer:
-		for(;;) {
+		for (;;) {
 			try {
-			while(next == Fail) { // バックトラッキング
-				if(choicePoint.parent == null) {
+			while (next == Fail) { // バックトラッキング
+				if (choicePoint.parent == null) {
 					return null; // 失敗
 				}
-				if(TRACE) trace("fail.");
+				if (TRACE) trace("fail.");
 				// System.err.println("バックトラッキングが発生！:"+ choicePoints.peek().revision);
 				choicePoint.undo();
-				if(choicePoint.iterator.hasNext()) { // 実行時の節削除(abolish)に対応
+				if (choicePoint.iterator.hasNext()) { // 実行時の節削除(abolish)に対応
 					callee = choicePoint.callee;
 					  next = choicePoint.iterator.next();
-					if(choicePoint.iterator.hasNext()) {
+					if (choicePoint.local || choicePoint.iterator.hasNext()) {
 						continue;
 					}
 					// next()内でもChoicePoint#add(VarRef)が発生するので、
 					// ここで!hasNext()になっていたとしても、ただpopするだけでは、正しくundo()されない為にバグる
-					choicePoint.parent.add(choicePoint);
+					choicePoint.parent.drain(choicePoint);
 				}
 				choicePoint = choicePoint.parent;
 			}
@@ -104,14 +112,14 @@ public class Query {
 				
 				Code callTable(final Table table, final Goal goal) {
 					final List<Procedure> rows;
-					if(table == null) {
+					if (table == null) {
 						throw QueryException.existence_error(Atom.PREDICATE, Atom.NIL);
 					}
-					if((rows = table.rows()).isEmpty()) {
+					if ((rows = table.rows()).isEmpty()) {
 						throw QueryException.existence_error(
 								Atom.PREDICATE, table.predicate().toFunctor());
 					}
-					if(rows.size() > 1) {
+					if (rows.size() > 1) {
 						final int revision = Query.this.ancestry;
 						setChoicePoint(new UnmodifiableIterator<Code>()
 						{	
@@ -124,7 +132,7 @@ public class Query {
 							public Code next() {
 								return call(rows.get(i++), goal, revision);
 							}
-						}, revision + 1);
+						}, revision + 1, false);
 					}
 					return call(rows.get(0), goal);
 				}
@@ -136,11 +144,11 @@ public class Query {
 				
 				@Override
 				public Code visit(Select code) {
-					if(TRACE) {
+					if (TRACE) {
 						StringBuilder builder = new StringBuilder(
 								code.table.predicate().id + "(");
-						if(code.args.length > 0) {
-							for(Term arg: code.args) {
+						if (code.args.length > 0) {
+							for (Term arg: code.args) {
 								builder.append(arg.bind(callee).unbind().toString(state));
 								builder.append(", ");
 							}
@@ -162,29 +170,23 @@ public class Query {
 						public boolean hasNext() { return i < code.codes.length; }
 
 						@Override
-						public Code next() {
-							return code.codes[i++];
-						}
-					});
+						public Code next() { return code.codes[i++]; }
+					}, code.local);
 					return code.codes[0];
 				}
 				
 				@Override
 				public Code visit(Cut code) {
 					ChoicePoint top = choicePoint;
-					if (code.count == 0) {
-						while (choicePoint.ancestry >= callee.ancestry) {
+					while (choicePoint.ancestry >= callee.ancestry) {
+						if (code.local && choicePoint.local) {
 							choicePoint = choicePoint.parent;
+							break;
 						}
-					}
-					else {
-						for (int i = 0; i < code.count
-								&& choicePoint.ancestry >= callee.ancestry; ++i) {
-							choicePoint = choicePoint.parent;
-						}
+						choicePoint = choicePoint.parent;
 					}
 					if (choicePoint.parent != null) {
-						choicePoint.add(top);
+						choicePoint.drain(top);
 					}
 					return code.next;
 				}
@@ -200,11 +202,11 @@ public class Query {
 				}
 				
 			});
-			if(next == True) {
+			if (next == True) {
 				// エントリーポイントまで戻ってきた
-				if(callee.caller == null) {
+				if (callee.caller == null) {
 					ArrayList<Term> values = new ArrayList<Term>(callee.locals());
-					for(int i = 0; i < callee.locals(); ++i) {
+					for (int i = 0; i < callee.locals(); ++i) {
 						values.add(callee.getSlot(i) == null ? null: callee.getSlot(i).unbind());
 					}
 					next = Fail;
@@ -216,10 +218,10 @@ public class Query {
 			// 例外の捕捉
 			} catch(QueryException e) {
 				do {
-					if((next = callee.procedure.catches(this, e)) != null) {
+					if ((next = callee.procedure.catches(this, e)) != null) {
 						continue outer;
 					}
-				} while((callee = callee.caller) != null);
+				} while ((callee = callee.caller) != null);
 				throw e;
 			}
 		}
@@ -236,19 +238,19 @@ public class Query {
 	private Code call(Procedure procedure, Term[] args, Code next, int revision) {
 		final Binding caller = callee;
 		// 末尾呼び出しの場合は現在のコールフレームをスキップ
-		if(next == True && callee.caller != null) {
+		if (next == True && callee.caller != null) {
 			  next = callee.next;
 			callee = callee.caller;
 		}
 		return procedure.call(this, (ancestry = revision + 1), caller, next, args);
 	}
 	
-	private void setChoicePoint(Iterator<Code> iterator, int snapshot) {
-		choicePoint = new ChoicePoint(choicePoint, callee, snapshot, iterator);
+	private void setChoicePoint(Iterator<Code> iterator, int snapshot, boolean local) {
+		choicePoint = new ChoicePoint(choicePoint, callee, snapshot, local, iterator);
 	}
 
 	private void trace(Object msg) {
-		for(int i = 0; i < callee.depth; ++i) {
+		for (int i = 0; i < callee.depth; ++i) {
 			System.err.print("  ");
 		}
 		System.err.println(msg);

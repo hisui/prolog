@@ -55,11 +55,11 @@ public class Coding extends Procedure {
 	
 	public static Coding create(State state, Term clause) {
 		Functor functor = (Functor) clause;
-		if(CLAUSE.equals(functor.predicate()) && functor.get(0) instanceof Functor) {
+		if (CLAUSE.equals(functor.predicate()) && functor.get(0) instanceof Functor) {
 			return new Coding(clause, (Functor) functor.get(0),
 					new Compile(state, functor.get(1)).getCode());
 		}
-		if(Arrays.asList(DIRECTIVE, QUERY).contains(functor.predicate())) {
+		if (Arrays.asList(DIRECTIVE, QUERY).contains(functor.predicate())) {
 			return new Coding(clause, null, new Compile(state, functor.get(0)).getCode());
 		}
 		return new Coding(clause, functor, Result.True);
@@ -67,11 +67,11 @@ public class Coding extends Procedure {
 
 	@Override
 	public Code call(Query query, Binding caller, Term[] args) {
-		if(head != null) {
+		if (head != null) {
 			// System.err.println("call: "+ head +", depth="+ (caller.depth + 1));
 			Unifier unifier = new Unifier(query);
-			for(int i = 0; i < head.arity(); ++i) {
-				if(!unifier.exec(args[i], caller, head.get(i), query.callee)) {
+			for (int i = 0; i < head.arity(); ++i) {
+				if (!unifier.exec(args[i], caller, head.get(i), query.callee)) {
 					return Result.Fail;
 				}
 			}
@@ -96,8 +96,8 @@ public class Coding extends Procedure {
 	 * 指定したローカル変数インデックスに対応する変数の名前を返します。
 	 */
 	public String getOriginalName(int i) {
-		for(Map.Entry<String,Variable> e : vars.entrySet()) {
-			if(e.getValue().id() == i) return e.getKey();
+		for (Map.Entry<String,Variable> e : vars.entrySet()) {
+			if (e.getValue().id() == i) return e.getKey();
 		}
 		return null;
 	}
@@ -130,26 +130,26 @@ public class Coding extends Procedure {
 		}
 
 		private Code conj(Term term, Code next) {
-			if(term instanceof Functor) {
+			if (term instanceof Functor) {
 				Functor functor = (Functor) term;
-				//if(name.atom().value() instanceof Procedure) {
+				//if (name.atom().value() instanceof Procedure) {
 				//	return new Call(next, functor.args(), name.<Procedure>atom().value());
 				//}
 				Predicate predicate = functor.predicate();
-				if(predicate.equals(CONJUNCTION)) {
+				if (predicate.equals(CONJUNCTION)) {
 					return disj(functor.get(0), disj(functor.get(1), next));
 				}
-				if(predicate.equals(CUT)) {
+				if (predicate.equals(CUT)) {
 					return new Cut(next);
 				}
 				// A -> B ==> A, !, B
-				if(predicate.equals(IF_THEN)) {
+				if (predicate.equals(IF_THEN)) {
 					return disj(functor.get(0), new Cut(disj(functor.get(1), next)));
 				}
 				dependencyList.add(predicate);
 				return new Select(next, functor.args(), state.getTable(predicate, true));
 			}
-			if(term instanceof Variable) {
+			if (term instanceof Variable) {
 				return new Select(next, new Term[]{term}, state.getTable(CALL));
 			}
 			throw new IllegalArgumentException("term: "+ term);
@@ -159,24 +159,26 @@ public class Coding extends Procedure {
 			ArrayDeque<Term> worklist = new ArrayDeque<>();
 			ArrayDeque<Code>    codes = new ArrayDeque<>();
 			worklist.add(term);
-			while(!worklist.isEmpty()) {
+			while (!worklist.isEmpty()) {
 				Term t = worklist.pop();
-				if(t instanceof Complex) {
+				if (t instanceof Complex) {
 					Complex complex = (Complex) t;
-					if(DISJUNCTION.equals(complex.predicate())) {
+					if (DISJUNCTION.equals(complex.predicate())) {
 						Term A = complex.get(0);
 						Term B = complex.get(1);
 						Term C;
-						// A -> C; B ==> A, '!'(1), C; B
-						if(A instanceof Complex
+						// A -> C; B
+						if (A instanceof Complex
 								&& IF_THEN.equals((complex = (Complex) A).predicate()))
 						{
+							Code cut = new Cut(next, true);
 							A = complex.get(0);
 							C = complex.get(1);
-							codes.addLast(new Choice(new Code[]{
-									disj(A, new Cut(disj(C, next), 1)),
-									disj(B, next)
-									}));
+							codes.addLast(new Choice(new Code[] {
+								new Choice(new Code[] {
+									disj(A, new Cut(disj(C, cut), true))
+								}, true), disj(B, cut)
+							}, true));
 						}
 						else {
 							worklist.push(B);
@@ -187,7 +189,7 @@ public class Coding extends Procedure {
 				}
 				codes.addLast(conj(t, next));
 			}
-			return codes.size() > 1 ? new Choice(codes.toArray(new Code[]{})) : codes.getFirst();
+			return codes.size() > 1 ? new Choice(codes.toArray(new Code[]{}), false) : codes.getFirst();
 		}
 	}
 
@@ -211,11 +213,11 @@ public class Coding extends Procedure {
 
 		@Override
 		public Term visit(Void _, Functor term) {
-			if(term.isDefinite()) {
+			if (term.isDefinite()) {
 				return term;
 			}
 			ArrayList<Term> args = new ArrayList<Term>(term.arity());
-			for(Term arg : term.args()) {
+			for (Term arg : term.args()) {
 				args.add(arg.accept(null, this));
 			}
 			return Functor.create(term.name(), args);
@@ -223,11 +225,11 @@ public class Coding extends Procedure {
 
 		@Override
 		public Term visit(Void _, Variable term) {
-			if(term.isDefinite()) {
+			if (term.isDefinite()) {
 				return term;
 			}
 			Variable var = vars.get(term.name());
-			if(var == null) {
+			if (var == null) {
 				int id = vars.size();
 				vars.put(term.name(),
 						(var = Variable.create(id, rename ? toBase26String(id): term.name())));
@@ -244,7 +246,7 @@ public class Coding extends Procedure {
 			String name = "";
 			do {
 				name += (char) (i % ('Z'-'A' +1) + 'A');
-			} while((i /= ('Z'-'A' +1)) != 0);
+			} while ((i /= ('Z'-'A' +1)) != 0);
 			return name;
 		}
 

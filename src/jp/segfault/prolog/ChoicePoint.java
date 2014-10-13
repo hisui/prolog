@@ -13,6 +13,7 @@ public class ChoicePoint {
 
 	public final ChoicePoint parent;
 	public final Binding     callee;
+	public final boolean     local;
 	public final int         ancestry;
 	
 	private VarRef head;
@@ -20,11 +21,12 @@ public class ChoicePoint {
 	
 	final Iterator<Code> iterator;
 	
-	ChoicePoint(ChoicePoint parent,
-			Binding callee, int ancestry, Iterator<Code> iterator)
+	ChoicePoint(ChoicePoint parent, Binding callee
+			, int ancestry, boolean local, Iterator<Code> iterator)
 	{
 		this.parent   = parent;
 		this.callee   = callee;
+		this.local    = local;
 		this.ancestry = ancestry;
 		this.iterator = iterator;
 	}
@@ -40,7 +42,7 @@ public class ChoicePoint {
 		}
 	}
 
-	public void add(ChoicePoint that) {
+	public void drain(ChoicePoint that) {
 		for(ChoicePoint prev = that; prev != this; prev = prev.parent) {
 			VarRef next = prev.head;
 			while(next != null) {

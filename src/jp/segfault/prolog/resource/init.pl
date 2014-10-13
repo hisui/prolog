@@ -134,8 +134,9 @@ bagof(Tp, X1, Bag) :-
 	term_sort(O1, O2),
 	foldl([A:A2|T]
 		^ B:B2 ^ C
-		^ (A==B -> C=[B:[B2|A2]  |T]
-		         ; C=[B:[B2],A:A2|T]), [_:[]], O2, O3),
+		^ (A==B, !
+			, C=[B:[B2|A2]  |T]
+		    ; C=[B:[B2],A:A2|T]), [_:[]], O2, O3),
 	!,
 	
 	% ひとつひとつ取り出す
@@ -145,8 +146,9 @@ bagof_diff([],  _, []) :- !.
 bagof_diff(Xs, [], Xs) :- !.
 bagof_diff([X|Xs], [Y|Ys], [X|Z]) :- X @< Y, !, bagof_diff(Xs, [Y|Ys], Z).
 bagof_diff([X|Xs], [Y|Ys], Z) :-
-	X == Y -> bagof_diff(   Xs , Ys, Z)
-	        ; bagof_diff([X|Xs], Ys, Z).
+	X == Y, !
+	    , bagof_diff(   Xs , Ys, Z)
+	    ; bagof_diff([X|Xs], Ys, Z).
 
 forall(X, Y) :- \+ (X, \+Y).
 
@@ -243,11 +245,12 @@ range(A0, B0, List) :-
 	range0(A, B, List).
 
 uniq(List, UniqList) :- term_sort(List, SortedList), uniq0(SortedList, UniqList).
-uniq0([], []) :- !.
+uniq0([ ], [ ]) :- !.
 uniq0([H], [H]) :- !.
 uniq0([A,B|T], L1) :-
-	A == B -> uniq0([A|T], L1)
-	        ; uniq0([B|T], L0), L1 = [A|L0].
+	A == B, !
+	    , uniq0([A|T], L1)
+	    ; uniq0([B|T], L0), L1 = [A|L0].
 
 sublist([], []).
 sublist([H|T], T2) :- sublist(T, T1), (T2 = [H|T1]; T2 = T1).
@@ -297,8 +300,9 @@ call(X,A,B,C,D,E) :- apply(X, [A,B,C,D,E]).
 partition(_, [], [], [])  :- !.
 partition(F, [H|T], A, B) :-
 	partition(F, T, A_, B_),
-	(call(F, H) -> A = [H|A_], B = B_
-	             ; B = [H|B_], A = A_).
+	(call(F, H), !
+	    , A = [H|A_], B = B_
+	    ; B = [H|B_], A = A_).
 
 quicksort(_, [], []) :- !.
 quicksort(Less, [H|T], Sorted) :-
@@ -310,8 +314,9 @@ quicksort(Less, [H|T], Sorted) :-
 merge(_, Xs, [], Xs) :- !.
 merge(_, [], Ys, Ys) :- !.
 merge(Less, [X|Xs], [Y|Ys], [H|T]) :-
-	call(Less, X, Y) -> H = X, merge(Less, Xs, [Y|Ys], T)
-	                  ; H = Y, merge(Less, Ys, [X|Xs], T).
+	call(Less, X, Y), !
+	  , H = X, merge(Less, Xs, [Y|Ys], T)
+	  ; H = Y, merge(Less, Ys, [X|Xs], T).
 
 sort(A, B, C) :- mergesort(A, B, C).
 
@@ -354,8 +359,9 @@ foldl( _, V1,    [], V1) :- !.
 
 unfoldl(Fn, V1, L, V0, T) :-
 	call(Fn, V, E, V1),
-	(var(V) -> L = T, V0 = E
-	         ; unfoldl(Fn, V, L, V0, [E|T])).
+	(var(V), !
+	    , L = T, V0 = E
+	     ; unfoldl(Fn, V, L, V0, [E|T])).
 
 foldr(Fn,   [V], V) :- !.
 foldr(Fn, [H|T], V) :- foldr(Fn, T, V0), call(Fn, V0, H, V).

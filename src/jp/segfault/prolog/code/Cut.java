@@ -6,15 +6,15 @@ package jp.segfault.prolog.code;
  */
 public class Cut extends Ordinal {
 	
-	public final int count;
+	public final boolean local;
 	
 	public Cut(Code next) {
-		this(next, 0);
+		this(next, false);
 	}
 	
-	public Cut(Code next, int count) {
+	public Cut(Code next, boolean local) {
 		super(next);
-		this.count = count;
+		this.local = local;
 	}
 
 	@Override
