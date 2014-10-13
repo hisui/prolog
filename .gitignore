@@ -1,2 +1,5 @@
-doc
-bin
+/doc
+/bin
+/.classpath
+/.project
+/.settings
