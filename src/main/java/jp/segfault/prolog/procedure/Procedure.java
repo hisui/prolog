@@ -25,12 +25,12 @@ public abstract class Procedure {
 	/**
 	 * プロシージャを実行します。
 	 * @param query 実行環境
-	 * @param args　  未バインドの引数
+	 * @param args  未バインドの引数
 	 * @return 次に実行する命令
 	 */
 	public Code call(Query query, Binding caller, Term[] args0) {
 		Term[] args = new Term[args0.length];
-		for(int i = 0; i < args.length; ++i) {
+		for (int i = 0; i < args.length; ++i) {
 			args[i] = args0[i].bind(caller); // 引数を現在のコールフレームで実体化
 		}
 		return call(query, args);

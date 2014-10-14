@@ -145,11 +145,11 @@ public class State {
 	 */
 	public Table getTable(Predicate predicate, boolean create) {
 		Table table = tables.get(predicate);
-		if(create && table == null) {
+		if (create && table == null) {
 			tables.put(predicate, ( table = new Table(predicate) ));
-			if(!databaseListenerSet.isEmpty()) {
+			if (!databaseListenerSet.isEmpty()) {
 				DatabaseEvent event = new DatabaseEvent(this);
-				for(DatabaseListener l: databaseListenerSet) {
+				for (DatabaseListener l: databaseListenerSet) {
 					l.tableCreated(event);
 				}
 			}
@@ -205,20 +205,20 @@ public class State {
 	 */
 	public void delete(Predicate predicate) {
 		Table table = getTable(predicate);
-		if(table != null) {
+		if (table != null) {
 			table.clear();
 		}
 	}
 	
 	public Code getPoolingCode(Term term) {
-		for(;;) {
+		for (;;) {
 			Reference<? extends Code> ref = codePoolQueue.poll();
-			if(ref == null) {
+			if (ref == null) {
 				break;
 			}
 			Iterator<Map.Entry<Term,SoftReference<Code>>> i = codePool.entrySet().iterator();
-			while(i.hasNext()) {
-				if(ref == i.next().getValue()) {
+			while (i.hasNext()) {
+				if (ref == i.next().getValue()) {
 					i.remove();
 					break;
 				}
@@ -237,9 +237,9 @@ public class State {
 	 */
 	public <T> void loadForeign(Class<T> clazz) {
 		try {
-			for(Field field: clazz.getFields()) {
+			for (Field field: clazz.getFields()) {
 				Foreign.Declaration decl = field.getAnnotation(Foreign.Declaration.class);
-				if(decl != null) {
+				if (decl != null) {
 					// System.err.println("登録:"+ decl.value());
 					insert(Predicate.of(decl.value()), (Procedure) field.get(null));
 				}
@@ -295,28 +295,28 @@ public class State {
 		// ロード時間の計測
 		Long start = "yes".equals(getFlag("benchmark_parse")) ? System.currentTimeMillis(): null;
 		
-		for(TermParser<Term> parser = newParser(reader);; ) {
+		for (TermParser<Term> parser = newParser(reader);; ) {
 			Term term = parser.next();
-			if(term == null) {
+			if (term == null) {
 				break;
 			}
-			if(getTable(Predicate.of("term_expansion/2")) != null) {
+			if (getTable(Predicate.of("term_expansion/2")) != null) {
 				List<Term> l = new Query(this,Coding.create(this
 						, Functor.create("?-", Functor.create
 								("term_expansion", term, Variable.create())))).ask();
-				if(l != null) {
+				if (l != null) {
 					term = l.get(l.size() - 1);
 				}
 			}
 			Coding coding = Coding.create(this, term);
-			if(coding.head != null) { // 節の追加
+			if (coding.head != null) { // 節の追加
 				insert(coding.head.predicate(), coding);
 			}
 			else { // クエリまたはディレクティブの実行
 				new Query(this, coding).ask();
 			}
 		}
-		if(start != null) {
+		if (start != null) {
 			System.err.println("State.parse: Elapsed time: "
 					+ (System.currentTimeMillis() - start) +" msec.");
 		}
@@ -336,20 +336,20 @@ public class State {
 	public Query newQuery(String script0, Object ...args) throws ParseException {
 		HashMap<String,Integer> vars = new HashMap<>();
 		String script = "";
-		for(int i = 0; i < script0.length(); ) {
+		for (int i = 0; i < script0.length(); ) {
 			int j = script0.indexOf('%', i);
-			if(j == -1) {
+			if (j == -1) {
 				script += script0.substring(i);
 				break;
 			}
 			script += script0.substring(i, j);
 			i = ++j;
-			while(i < script0.length() && Character.isLowerCase(script0.charAt(i))) i++;
-			if(i == j) {
+			while (i < script0.length() && Character.isLowerCase(script0.charAt(i))) i++;
+			if (i == j) {
 				throw new IllegalArgumentException("変数名がありません: col="+ i);
 			}
 			String key = script0.substring(j, i);
-			if(!vars.containsKey(key)) {
+			if (!vars.containsKey(key)) {
 				vars.put(key, vars.size());
 			}
 			script += " _"+ key;
@@ -363,7 +363,7 @@ public class State {
 			throw new IllegalStateException(e);
 		}
 		Query query = new Query(this, coding);
-		for(Map.Entry<String,Integer> e: vars.entrySet()) {
+		for (Map.Entry<String,Integer> e: vars.entrySet()) {
 			query.callee.setSlot(coding.vars().get("_"+ e.getKey()).id(), Term.valueOf(args[e.getValue()]));
 		}
 		return query;
@@ -373,7 +373,7 @@ public class State {
 	 * {@link TermParser<Term>}を生成します。
 	 */
 	public TermParser<Term> newParser(Reader reader) {
-		if(reader instanceof PipedReader) {
+		if (reader instanceof PipedReader) {
 			return new PipedParser<Term>((PipedReader) reader
 					, new TermFactoryDef(), getOperatorTable());
 		}

@@ -64,13 +64,11 @@ public abstract class Foreign extends Procedure {
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.FIELD)
-	public @interface Declaration {
-		String value();
-	}
+	public @interface Declaration { String value(); }
 
 	@Override
 	public Code call(Query query, Term ...args) {
-		for(int i = 0; i < args.length; ++i) {
+		for (int i = 0; i < args.length; ++i) {
 			args[i] = args[i].strip();
 		}
 		return call0(query, args);
@@ -91,7 +89,7 @@ public abstract class Foreign extends Procedure {
 		@Override
 		protected Code call0(Query query, Term... args) {
 			Coding coding = Coding.create(query.state, args[0].unbind());
-			if(coding.head == null) {
+			if (coding.head == null) {
 				throw QueryException.type_error(Atom.FUNCTOR, Atom.NIL);
 			}
 			query.state.insert(coding.head.predicate(), coding);
@@ -104,7 +102,7 @@ public abstract class Foreign extends Procedure {
 		@Override
 		protected Code call0(Query query, Term... args) {
 			Coding coding = Coding.create(query.state, args[0].unbind());
-			if(coding.head == null) {
+			if (coding.head == null) {
 				throw QueryException.type_error(Atom.FUNCTOR, Atom.NIL);
 			}
 			query.state.insert(coding.head.predicate(), coding, 0);
@@ -126,16 +124,16 @@ public abstract class Foreign extends Procedure {
 		@Override
 		public Code call(Query query, Term... args) {
 			Functor head = args[0].functor();
-			if(Predicate.CLAUSE.equals(head.predicate())) {
+			if (Predicate.CLAUSE.equals(head.predicate())) {
 				head = head.get(0).functor();
 			}
 			Iterator<Procedure> i = query.state.select(head.predicate()).iterator();
-			while(i.hasNext()) {
+			while (i.hasNext()) {
 				Procedure procedure = i.next();
-				if(procedure instanceof Coding) {
+				if (procedure instanceof Coding) {
 					query.callee.expandLocal(procedure.locals());
 					Unifier unifier = new Unifier(query);
-					if(unifier.exec(args[0], ((Coding) procedure).clause.bind(query.callee))) {
+					if (unifier.exec(args[0], ((Coding) procedure).clause.bind(query.callee))) {
 						unifier.rollback();
 						i.remove();
 					}
@@ -170,11 +168,11 @@ public abstract class Foreign extends Procedure {
 	public static final Foreign LISTING = new Foreign() {
 		@Override
 		protected Code call0(Query query, Term... args) {
-			for(Procedure procedure : query.state.select(Predicate.of(args[0]))) {
+			for (Procedure procedure : query.state.select(Predicate.of(args[0]))) {
 				String value = "foreign";
-				if(procedure instanceof Coding) {
+				if (procedure instanceof Coding) {
 					Coding coding = (Coding) procedure;
-					if(coding.clause != null) {
+					if (coding.clause != null) {
 						value = coding.clause.toString(query.state);
 					}
 				}
@@ -195,8 +193,8 @@ public abstract class Foreign extends Procedure {
 
 				@Override
 				public boolean hasNext() {
-					while(j == null || !j.hasNext()) {
-						if(!i.hasNext()) {
+					while (j == null || !j.hasNext()) {
+						if (!i.hasNext()) {
 							return false;
 						}
 						j = query.state.getTable(i.next()).rows().iterator();
@@ -206,11 +204,11 @@ public abstract class Foreign extends Procedure {
 
 				@Override
 				public Code next() {
-					if(!hasNext()) {
+					if (!hasNext()) {
 						throw new NoSuchElementException();
 					}
 					Procedure procedure = j.next();
-					if(!(procedure instanceof Coding)) {
+					if (!(procedure instanceof Coding)) {
 						return Fail;
 					}
 					final Coding coding = (Coding) procedure;
@@ -238,7 +236,7 @@ public abstract class Foreign extends Procedure {
 				int ancestry, Binding caller, Code next, Term[] args)
 		{
 			Unifier unifier = new Unifier(query);
-			if(unifier.exec(args[0], caller, args[1], caller)) {
+			if (unifier.exec(args[0], caller, args[1], caller)) {
 				unifier.commit(query);
 				return next;
 			}
@@ -264,9 +262,9 @@ public abstract class Foreign extends Procedure {
 		@Override
 		protected Code call0(final Query query, final Term... args) {
 			final Functor functor = args[1].functor();
-			if(!(args[0] instanceof Variable)) {
+			if (!(args[0] instanceof Variable)) {
 				int arity = args[0].numeric().value().intValue();
-				if(arity <= 0 || arity > functor.arity()) {
+				if (arity <= 0 || arity > functor.arity()) {
 					return Fail;
 				}
 				return UNIFY.call(query, functor.get(arity - 1), args[2]);
@@ -280,7 +278,7 @@ public abstract class Foreign extends Procedure {
 
 				@Override
 				public Code next() {
-					if(!hasNext()) {
+					if (!hasNext()) {
 						throw new NoSuchElementException();
 					}
 					int arity = i++;
@@ -299,7 +297,7 @@ public abstract class Foreign extends Procedure {
 		public Code call0(Query query, Term... args) {
 			Term x;
 			Term y;
-			if(args[0] instanceof Functor) {
+			if (args[0] instanceof Functor) {
 				Functor functor = (Functor) args[0];
 				ArrayDeque<Term> terms = new ArrayDeque<Term>(1 + functor.arity());
 				terms.add(Term.valueOf(functor.name()));
@@ -309,7 +307,7 @@ public abstract class Foreign extends Procedure {
 			}
 			else {
 				List<Term> terms = args[1].functor().unlist();
-				if(terms.isEmpty()) {
+				if (terms.isEmpty()) {
 					return Fail;
 				}
 				x = args[0];
@@ -324,20 +322,20 @@ public abstract class Foreign extends Procedure {
 		@Override
 		protected Code call0(Query query, Term... args) {
 			Unifier unifier = new Unifier(query);
-			if(args[0] instanceof Functor) {
+			if (args[0] instanceof Functor) {
 				Functor functor = (Functor) args[0];
-				if(!(unifier.exec(args[1], Term.valueOf(functor.name()))
+				if (!(unifier.exec(args[1], Term.valueOf(functor.name()))
 				  && unifier.exec(args[2], Term.valueOf(functor.arity())))) {
 					return Fail;
 				}
 			}
 			else {
 				Term[] terms = new Term[ args[2].numeric().value().intValue() ];
-				for(int i = 0; i < terms.length; ++i) {
+				for (int i = 0; i < terms.length; ++i) {
 					terms[i] = Variable.create(i + query.callee.locals(), "$"+ i);
 				}
 				query.callee.expandLocal(terms.length);
-				if(!unifier.exec(args[0], Functor.create(args[1].atom().value(), terms).bind(query.callee))) {
+				if (!unifier.exec(args[0], Functor.create(args[1].atom().value(), terms).bind(query.callee))) {
 					return Fail;
 				}
 			}
@@ -382,14 +380,14 @@ public abstract class Foreign extends Procedure {
 		{
 			Term term = args[0].bind(caller).strip().functor();
 			Binding base = null;
-			if(term instanceof CompRef) {
+			if (term instanceof CompRef) {
 				// term が属するコールフレームを引き継いだ環境をつくる
 				base = ((CompRef) term).binding;
 				term = ((CompRef) term).comp;
 			}
 			// コードのキャッシュを参照
 			Code code = query.state.getPoolingCode(term);
-			if(code == null) {
+			if (code == null) {
 				query.state.putPoolingCode(term,
 						(code = new Coding.Compile(query.state, term).getCode()));
 			}
@@ -423,7 +421,7 @@ public abstract class Foreign extends Procedure {
 		@Override
 		public Code catches(Query query, QueryException e) {
 			Binding callee = query.callee;
-			if(Unifier.unify(query, e.term, callee.getSlot(CATCHER_SLOT))) {
+			if (Unifier.unify(query, e.term, callee.getSlot(CATCHER_SLOT))) {
 				// tail-callになるので、ハンドラ内で発生した例外は捕捉できない
 				return new Call(True, new Term[]{ callee.getSlot(HANDLER_SLOT) }, CALL);
 			}
@@ -444,7 +442,7 @@ public abstract class Foreign extends Procedure {
 		@Override
 		public Code call0(final Query query, final Term... args) {
 			// _ は特別扱い(高速化)
-			if(args[2] == Variable._) {
+			if (args[2] == Variable._) {
 				query.setChoicePoint(new SingleValueIterator<Code>() {
 					@Override protected Code value() { return True; }
 				});
@@ -552,7 +550,7 @@ public abstract class Foreign extends Procedure {
 	public static final Foreign ATOM_CONCAT = new Foreign() {
 		@Override
 		protected Code call0(final Query query, final Term... args) {
-			if(args[2] instanceof Variable) {
+			if (args[2] instanceof Variable) {
 				return UNIFY.call(query, args[2],
 						Term.valueOf(args[0].atom().value() + args[1].atom().value()));
 			}
@@ -570,7 +568,7 @@ public abstract class Foreign extends Procedure {
 				public Code next() {
 					Unifier unifier = new Unifier(query);
 					int j = i++;
-					if(unifier.exec(args[0], Term.valueOf(value.substring(0, j)))
+					if (unifier.exec(args[0], Term.valueOf(value.substring(0, j)))
 					&& unifier.exec(args[1], Term.valueOf(value.substring(j   ))))
 					{
 						unifier.commit(query);
@@ -601,12 +599,12 @@ public abstract class Foreign extends Procedure {
 
 				@Override
 				public Code next() {
-					if(!hasNext()) {
+					if (!hasNext()) {
 						throw new NoSuchElementException();
 					}
 					int k = j++;
 					Unifier unifier = new Unifier(query);
-					if(unifier.exec(args[4], Term.valueOf(value.substring(i, k)))
+					if (unifier.exec(args[4], Term.valueOf(value.substring(i, k)))
 					&& unifier.exec(args[1], Term.valueOf(i))
 					&& unifier.exec(args[2], Term.valueOf(k - i))
 					&& unifier.exec(args[3], Term.valueOf(value.length() - k)))
@@ -625,16 +623,16 @@ public abstract class Foreign extends Procedure {
 	public static final Foreign ATOM_CHARS = new Foreign() {
 		@Override
 		protected Code call0(final Query query, Term... args) {
-			if(args[0] instanceof Variable) {
+			if (args[0] instanceof Variable) {
 				String value = "";
-				for(Term c: args[1].functor().unlist()) {
+				for (Term c: args[1].functor().unlist()) {
 					value += c.atom().value();
 				}
 				return UNIFY.call(query, args[0], Term.valueOf(value));
 			}
 			final String value = args[0].atom().value();
 			final Term[] chars = new Term[value.length()];
-			for(int i = 0; i < value.length(); ++i) {
+			for (int i = 0; i < value.length(); ++i) {
 				chars[value.length() - i - 1] = Term.valueOf(""+ value.charAt(i));
 			}
 			return UNIFY.call(query, args[1], Functor.list(chars));
@@ -742,11 +740,11 @@ public abstract class Foreign extends Procedure {
 		protected Code call0(Query query, Term... args) {
 			Object stream = args[0].atom().value();
 			try {
-				if(stream instanceof PrintStream) {
+				if (stream instanceof PrintStream) {
 					((PrintStream) stream).close();
 					return True;
 				}
-				if(stream instanceof InputStream) {
+				if (stream instanceof InputStream) {
 					((InputStream) stream).close();
 					return True;
 				}
@@ -794,13 +792,13 @@ public abstract class Foreign extends Procedure {
 		@Override
 		public Code call0(Query query, Term... args) {
 			PrintStream out = args[0].cast(PrintStream.class, Atom.STREAM);
-			if(args[1] instanceof Numeric) {
+			if (args[1] instanceof Numeric) {
 				out.append((char) args[0].numeric().value().intValue());
 				return True;
 			}
-			if(args[1] instanceof Atom) {
+			if (args[1] instanceof Atom) {
 				String value = args[1].atom().value();
-				if(value.length() == 1) {
+				if (value.length() == 1) {
 					out.append(value.charAt(0));
 					return True;
 				}
@@ -867,7 +865,7 @@ public abstract class Foreign extends Procedure {
 				public Code next() {
 					Unifier unifier = new Unifier(query);
 					String key = i.next();
-					if(unifier.exec(args[0], Term.valueOf(key))
+					if (unifier.exec(args[0], Term.valueOf(key))
 					&& unifier.exec(args[1], Term.valueOf(query.state.getFlag(key))))
 					{
 						unifier.commit(query);
@@ -891,7 +889,7 @@ public abstract class Foreign extends Procedure {
 				throw QueryException.domain_error(Atom.OPERATOR_SPECIFIER, args[1]);
 			}
 			int priority = args[0].numeric().value().intValue();
-			if(!(0 <= priority && priority <= 1200)) {
+			if (!(0 <= priority && priority <= 1200)) {
 				throw QueryException.domain_error(Atom.OPERATOR_PRIORITY, args[0]);
 			}
 			query.state.getOperatorTable().setOperator(priority, kind, args[2].atom().value());
@@ -910,8 +908,8 @@ public abstract class Foreign extends Procedure {
 
 				@Override
 				public boolean hasNext() {
-					while(i2 == null || !i2.hasNext()) {
-						if(!i.hasNext()) {
+					while (i2 == null || !i2.hasNext()) {
+						if (!i.hasNext()) {
 							return false;
 						}
 						i2 = query.state.getOperatorTable().getOperator(i.next()).iterator();
@@ -921,12 +919,12 @@ public abstract class Foreign extends Procedure {
 
 				@Override
 				public Code next() {
-					if(!hasNext()) {
+					if (!hasNext()) {
 						throw new NoSuchElementException();
 					}
 					Unifier unifier = new Unifier(query);
 					Operator op = i2.next();
-					if(unifier.exec(args[0], Term.valueOf(op.priority))
+					if (unifier.exec(args[0], Term.valueOf(op.priority))
 					&& unifier.exec(args[1], Term.valueOf(op.kind.toString()))
 					&& unifier.exec(args[2], Term.valueOf(op.notation)))
 					{
@@ -988,7 +986,7 @@ public abstract class Foreign extends Procedure {
 		protected Code call0(Query query, Term... args) {
 			
 			ArrayList<URL> classpath = new ArrayList<URL>();
-			for(Term term: args[1].functor().unlist()) {
+			for (Term term: args[1].functor().unlist()) {
 				try {
 					classpath.add(new URL(term.atom().value()));
 				} catch (MalformedURLException e) {
@@ -1026,7 +1024,7 @@ public abstract class Foreign extends Procedure {
 				@Override
 				public Term strip() {
 					List<Term> result = new Query(state, coding).ask();
-					if(result == null) {
+					if (result == null) {
 						throw QueryException.instantiation_error();
 					}
 					return result.get(coding.vars().get(bridge.name()).id());
