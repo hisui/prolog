@@ -90,13 +90,7 @@ public class State {
 		loadForeign(Foreign.class);
 
 		try {
-			// init.pl のロード
-			parse(new BufferedReader(new InputStreamReader(
-					State.class.getResourceAsStream("resource/init.pl"), "UTF-8")));
-			
-			// DCGマクロ
-			parse(new BufferedReader(new InputStreamReader(
-					State.class.getResourceAsStream("resource/dcg.pl"), "UTF-8")));
+			parse(new InputStreamReader(getClass().getResourceAsStream("init.pl"), "UTF-8"));
 		} catch (Exception e) {
 			// e.printStackTrace();
 			throw new IllegalStateException("init.pl の読み込みに失敗！", e);

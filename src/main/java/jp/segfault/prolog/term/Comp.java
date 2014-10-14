@@ -16,7 +16,7 @@ public class Comp extends Complex {
 
 	static Comp make(String name, List<Term> args) {
 		boolean forall = true;
-		for(Term arg : args) {
+		for (Term arg : args) {
 			if(!arg.isDefinite()) {
 				forall = false;
 				break;
@@ -71,7 +71,7 @@ public class Comp extends Complex {
 		
 		@Override
 		public Functor bind(Binding binding) {
-			if(binding == null) { // kore daijoubu kana?
+			if (binding == null) { // kore daijoubu kana?
 				return this;
 			}
 			return new CompRef(this, binding);
@@ -81,14 +81,14 @@ public class Comp extends Complex {
 		protected Term rebind(Binding binding, int[] counter, Map<Term,Term> done, int olderBound) {
 			Term key = binding == null ? this: new CompRef(this, binding);
 			Term val = done.get(key);
-			if(val == null) {
+			if (val == null) {
 				
 				// 無限再帰を防止
 				done.put(key, Atom.CYCLE);
 				
 				// 引数も全てrebindする
 				Term[] args = new Term[super.args.length];
-				for(int i = 0; i < args.length; ++i) {
+				for (int i = 0; i < args.length; ++i) {
 					args[i] = super.args[i].rebind(binding, counter, done, olderBound);
 				}
 				done.put(key, (val = Functor.create(super.name, args)));

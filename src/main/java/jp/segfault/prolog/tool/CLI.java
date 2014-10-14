@@ -6,6 +6,7 @@ import java.io.PipedReader;
 import java.io.PipedWriter;
 import java.util.List;
 
+import jline.console.ConsoleReader;
 import jp.segfault.prolog.Query;
 import jp.segfault.prolog.QueryException;
 import jp.segfault.prolog.State;
@@ -48,28 +49,27 @@ public class CLI {
 	}
 
 	public void exec() throws Exception {
+        ConsoleReader console = new ConsoleReader();
 		PipedWriter writer = new PipedWriter();
 		PipedReader reader = new PipedReader();
 		reader.connect(writer);
 		TermParser<Term> parser = state.newParser(reader);
-		for(int i = 0;; ) {
-			state.out.printf("%02d ?- ", ++i);
-			state.out.flush();
-			for(int j = 0;; ) {
-				String line = System.console().readLine();
-				if(line == null) {
+		for (int i = 0;; ) {
+            console.setPrompt(String.format("%02d ?- ", ++i));
+			for (int j = 0;; ) {
+				String line = console.readLine();
+				if (line == null) {
 					break;
 				}
 				writer.write(line +"\n");
 				try {
 					Term term = parser.next();
-					if(term == null) {
-						state.out.printf("% 4d| ", ++j);
-						state.out.flush();
+					if (term == null) {
+                        console.setPrompt(String.format("% 4d| ", ++j));
 						continue;
 					}
-					do { ask(term); } while((term = parser.next()) != null);
-				} catch(ParseException e) {
+					do { ask(term); } while ((term = parser.next()) != null);
+				} catch (ParseException e) {
 					state.out.println("Parse error: "+ e.getMessage());
 				}
 				break;
@@ -78,7 +78,7 @@ public class CLI {
 	}
 
 	public void ask(Term term) throws IOException {
-		ask( Coding.create(state, Functor.create("?-", term)) );
+        ask( Coding.create(state, Functor.create("?-", term)) );
 	}
 
 	public void ask(Coding coding) throws IOException {
@@ -86,24 +86,24 @@ public class CLI {
 		try {
 			do {
 				List<Term> answer = query.ask();
-				if(answer == null) {
+				if (answer == null) {
 					state.out.println("fail.");
 					return;
 				}
-				for(int i = 0; i < answer.size(); ++i) {
-					if(answer.get(i) != null) {
+				for (int i = 0; i < answer.size(); ++i) {
+					if (answer.get(i) != null) {
 						state.out.println(coding.getOriginalName(i)
 								+" = "+ answer.get(i).toString(state));
 					}
 				}
-				if(!query.canBacktrack()) {
+				if (!query.canBacktrack()) {
 					break;
 				}
 				state.out.print("ok? [y/N]");
 				state.out.flush();
-			} while(System.console().readLine().indexOf("y") == -1);
+			} while (System.console().readLine().indexOf("y") == -1);
 			state.out.println("true.");
-		} catch(QueryException e) {
+		} catch (QueryException e) {
 			e.printStackTrace();
 			// state.out.println("エラー:"+ e.getMessage());
 		}

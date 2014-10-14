@@ -14,7 +14,7 @@ public class CompRef extends Complex {
 	public final Binding binding;
 	
 	public CompRef(Comp comp, Binding binding) {
-		if(binding == null) {
+		if (binding == null) {
 			throw new IllegalArgumentException("binding is null.");
 		}
 		this.comp    = comp;
@@ -28,7 +28,7 @@ public class CompRef extends Complex {
 	
 	@Override
 	public boolean equals(Object o) {
-		if(o instanceof CompRef) {
+		if (o instanceof CompRef) {
 			CompRef that = (CompRef) o;
 			return comp.equals(that.comp)
 					&& binding.ordinal == that.binding.ordinal;
@@ -55,7 +55,7 @@ public class CompRef extends Complex {
 	@Override
 	public Term[] args() {
 		Term[] args = new Term[comp.arity()];
-		for(int i = 0; i < args.length; ++i) {
+		for (int i = 0; i < args.length; ++i) {
 			args[i] = comp.get(i).bind(binding);
 		}
 		return args;

@@ -17,7 +17,6 @@ public class ChoicePoint {
 	public final int         ancestry;
 	
 	private VarRef head;
-	// private int size = 0;
 	
 	final Iterator<Code> iterator;
 	
@@ -32,20 +31,19 @@ public class ChoicePoint {
 	}
 	
 	public void add(VarRef var) {
-		if(var.binding.ordinal <= ancestry) {
-			if(var.getTemp() != null) {
+		if (var.binding.ordinal <= ancestry) {
+			if (var.getTemp() != null) {
 				throw new IllegalStateException("getTemp(var) != null");
 			}
 			var.setTemp(head);
 			head = var;
-			// ++size;
 		}
 	}
 
 	public void drain(ChoicePoint that) {
-		for(ChoicePoint prev = that; prev != this; prev = prev.parent) {
+		for (ChoicePoint prev = that; prev != this; prev = prev.parent) {
 			VarRef next = prev.head;
-			while(next != null) {
+			while (next != null) {
 				VarRef temp = (VarRef) next.getTemp();
 				if(next.binding.ordinal <= ancestry) {
 					next.setTemp(head);
@@ -57,13 +55,12 @@ public class ChoicePoint {
 	}
 
 	public void undo() {
-		while(head != null) {
+		while (head != null) {
 			VarRef var = head;
 			head = (VarRef) var.getTemp();
 			var.setTemp(null);
 			var.setSlot(null);
 		}
-		// size = 0;
 	}
 }
 
