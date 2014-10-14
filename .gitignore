@@ -1,5 +1,11 @@
-/doc
+# sbt
+/target
+/project/target
+/project
+
+# Eclipse
 /bin
+/doc
 /.classpath
 /.project
 /.settings

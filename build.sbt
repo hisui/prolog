@@ -4,8 +4,6 @@ name := "sfprolog"
 
 version := "1.0.0"
 
-javacVersion := "1.7"
-
 initialCommands := """
 """
 
