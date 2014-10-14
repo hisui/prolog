@@ -14,3 +14,5 @@ assemblySettings
 assembleArtifact in packageScala := false
 
 jarName in assembly := "prolog.jar"
+
+mainClass in assembly := Some("jp.segfault.prolog.tool.CLI")
