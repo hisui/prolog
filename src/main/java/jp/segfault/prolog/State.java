@@ -308,7 +308,7 @@ public class State {
 					term = l.get(l.size() - 1);
 				}
 			}
-			Coding coding = Coding.create(this, term);
+			Coding coding = Coding.create(this, term.functor());
 			if (coding.head != null) { // 節の追加
 				insert(coding.head.predicate(), coding);
 			}

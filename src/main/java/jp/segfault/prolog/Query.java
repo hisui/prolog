@@ -145,8 +145,7 @@ public class Query {
 				@Override
 				public Code visit(Select code) {
 					if (TRACE) {
-						StringBuilder builder = new StringBuilder(
-								code.table.predicate().id + "(");
+						StringBuilder builder = new StringBuilder(code.table.predicate().id + "(");
 						if (code.args.length > 0) {
 							for (Term arg: code.args) {
 								builder.append(arg.bind(callee).unbind().toString(state));
@@ -216,7 +215,7 @@ public class Query {
 				callee = callee.caller;
 			}
 			// 例外の捕捉
-			} catch(QueryException e) {
+			} catch (QueryException e) {
 				do {
 					if ((next = callee.procedure.catches(this, e)) != null) {
 						continue outer;

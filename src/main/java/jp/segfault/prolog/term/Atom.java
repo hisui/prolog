@@ -40,6 +40,8 @@ public class Atom extends Functor implements Atomic<String> {
 	
 	// その他
 	public static final Atom EMPTY = Atom.make("");
+    public static final Atom TRUE  = Atom.make("true");
+    public static final Atom FAIL  = Atom.make("fail");
 	public static final Atom NONE  = Atom.make("()");
 	public static final Atom NULL  = Atom.make("{}");
 	public static final Atom CYCLE = Atom.make("**");

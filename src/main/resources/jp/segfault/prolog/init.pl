@@ -53,7 +53,7 @@
 :- set_prolog_flag(trace_unification, no).
 :- set_prolog_flag(trace_tokenizer,   no).
 :- set_prolog_flag(trace_call_frame,  no).
-:- set_prolog_flag(benchmark_parse,  yes).
+:- set_prolog_flag(benchmark_parse,   no).
 
 
 %%

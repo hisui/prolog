@@ -88,7 +88,7 @@ public abstract class Foreign extends Procedure {
 	public static final Foreign ASSERTZ = new Foreign() {
 		@Override
 		protected Code call0(Query query, Term... args) {
-			Coding coding = Coding.create(query.state, args[0].unbind());
+			Coding coding = Coding.create(query.state, args[0].unbind().functor());
 			if (coding.head == null) {
 				throw QueryException.type_error(Atom.FUNCTOR, Atom.NIL);
 			}
@@ -101,7 +101,7 @@ public abstract class Foreign extends Procedure {
 	public static final Foreign ASSERTA = new Foreign() {
 		@Override
 		protected Code call0(Query query, Term... args) {
-			Coding coding = Coding.create(query.state, args[0].unbind());
+			Coding coding = Coding.create(query.state, args[0].unbind().functor());
 			if (coding.head == null) {
 				throw QueryException.type_error(Atom.FUNCTOR, Atom.NIL);
 			}
@@ -216,8 +216,8 @@ public abstract class Foreign extends Procedure {
 					// TODO: expandLocalによるメモリリーク解消
 					Functor tmp = Functor.create("[]",
 							coding.head,
-							coding.clause != null ?
-							coding.clause: Atom.NIL).rebind(query.callee).functor();
+			                coding.getBodyTerm())
+                                .rebind(query.callee).functor();
 					return
 						UNIFY.call(query, args[0], tmp.get(0)) == Fail ? Fail:
 						UNIFY.call(query, args[1], tmp.get(1));

@@ -35,7 +35,7 @@ import static jp.segfault.prolog.Predicate.*;
  */
 public class Coding extends Procedure {
 
-	public final Term    clause;
+	public final Functor clause;
 	public final Functor head;
 	public final Code    body;
 	
@@ -45,7 +45,7 @@ public class Coding extends Procedure {
 		this(null, head, body);
 	}
 	
-	public Coding(Term clause, Functor head, Code body) {
+	public Coding(Functor clause, Functor head, Code body) {
 		this.clause = clause;
 		VariableIndexer indexer = new VariableIndexer();
 		this.head = head == null ? null :(Functor) head.accept(null, indexer);
@@ -53,16 +53,15 @@ public class Coding extends Procedure {
 		this.vars = indexer.getMap(); // 変数表
 	}
 	
-	public static Coding create(State state, Term clause) {
-		Functor functor = (Functor) clause;
-		if (CLAUSE.equals(functor.predicate()) && functor.get(0) instanceof Functor) {
-			return new Coding(clause, (Functor) functor.get(0),
-					new Compile(state, functor.get(1)).getCode());
+	public static Coding create(State state, Functor clause) {
+		if (CLAUSE.equals(clause.predicate()) && clause.get(0) instanceof Functor) {
+			return new Coding(clause, (Functor) clause.get(0),
+					new Compile(state, clause.get(1)).getCode());
 		}
-		if (Arrays.asList(DIRECTIVE, QUERY).contains(functor.predicate())) {
-			return new Coding(clause, null, new Compile(state, functor.get(0)).getCode());
+		if (Arrays.asList(DIRECTIVE, QUERY).contains(clause.predicate())) {
+			return new Coding(clause, null, new Compile(state, clause.get(0)).getCode());
 		}
-		return new Coding(clause, functor, Result.True);
+		return new Coding(clause, clause, Result.True);
 	}
 
 	@Override
@@ -84,7 +83,14 @@ public class Coding extends Procedure {
 	public int locals() {
 		return vars.size();
 	}
-	
+
+    public Term getBodyTerm() {
+        if (clause != null && CLAUSE.equals(clause.predicate())) {
+            return clause.get(1);
+        }
+        return Atom.TRUE;
+    }
+
 	/**
 	 * 変数名と変数の対応表です。
 	 */
